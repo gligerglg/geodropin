@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_google_places/flutter_google_places.dart';
 import 'package:geodropin/Repository/Database.dart';
 import 'package:geodropin/model/Place.dart';
+import 'package:geodropin/ui/commom_ui/AlertDialog.dart';
 import 'package:geodropin/ui/commom_ui/AppClipper.dart';
+import 'package:geodropin/util/Util.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_maps_webservice/places.dart';
@@ -273,7 +275,7 @@ class _AddPlaceState extends State<AddPlace> {
       _myLocation = response.result.geometry.location;
       latitude = "Latitude : ${response.result.geometry.location.lat}";
       longitude = "Longitude : ${response.result.geometry.location.lng}";
-      place = p.description.toString();
+      place = generateLocationTitle(p.description.toString());
 
       myPlace = Place(p.id, place, response.result.geometry.location.lat,
           response.result.geometry.location.lng);
@@ -286,6 +288,10 @@ class _AddPlaceState extends State<AddPlace> {
     if (place != null) {
       var dbHelper = DBHelper();
       dbHelper.savePlace(place);
+    }else{
+      showAlertOneButton("Warning","Please select a location and save it","OK",context,(){
+        Navigator.pop(context);
+      });
     }
   }
 

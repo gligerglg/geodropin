@@ -31,3 +31,20 @@ double getDistance(GeoPoint point1, GeoPoint point2){
 
   return 12.742 * asin(sqrt(a)) * 1000 * 1000;
 }
+
+double getDistanceByLatLon(double latitude1, double longitude1, double latitude2, double longitude2){
+  double p = 0.017453292519943295;
+  double a = 0.5 - cos((latitude2 - latitude1) * p) / 2 +
+      cos(latitude1 * p) * cos(latitude2 * p) *
+          (1 - cos((longitude2 - longitude1) * p)) / 2;
+
+  return 12.742 * asin(sqrt(a)) * 1000 * 1000;
+}
+
+String generateLocationTitle(String location){
+  List<String> splitArr = location.split(" ");
+  if(splitArr.length>=2)
+    return "${splitArr[0]} ${splitArr[1]} ${splitArr[2]}";
+  else
+    return location;
+}

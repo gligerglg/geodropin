@@ -21,9 +21,11 @@ class _HomeState extends State<Home> {
   GeoPoint _myLocation;
 
   String _nearestLocation="";
-  String _gpsStatus="";
   String _distance="";
   String _speed="";
+
+  Place minPlace;
+  double distance=0, minDistance=0;
   StreamSubscription<Position> positionStream;
 
   var geolocator = Geolocator();
@@ -40,15 +42,30 @@ class _HomeState extends State<Home> {
             (Position position) {
           if(position!=null){
             places.asStream().forEach((placeList) {
-              for(Place place in placeList)
-                print(place.title);
+              minPlace = placeList[0];
+              distance = 0;
+              minDistance = getDistanceByLatLon(position.latitude, position.longitude, minPlace.latitude, minPlace.longitude);
+              for(Place place in placeList){
+
+                distance = getDistanceByLatLon(position.latitude, position.longitude, place.latitude, place.longitude);
+                print(distance);
+                if(distance<minDistance){
+                  minDistance = distance;
+                  minPlace = place;
+                  print(minPlace.title);
+                }
+              }
+
+              setState(() {
+                minPlace!=null?_nearestLocation = generateLocationTitle(minPlace.title):_nearestLocation="";
+                _myLocation = new GeoPoint(position.latitude, position.longitude);
+                _speed = generateSpeedData(position.speed);
+                _distance = generateDistanceData(minDistance);
+              });
+
             });
 
-            setState(() {
-              _myLocation = new GeoPoint(position.latitude, position.longitude);
-              _speed = generateSpeedData(position.speed);
-              _distance = generateDistanceData(getDistance(_myLocation, new GeoPoint(position.latitude, position.longitude)));
-            });
+
           }
         });
 
@@ -67,25 +84,13 @@ class _HomeState extends State<Home> {
               child: new Column(
                 children: <Widget>[
                   new Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.start,
                     children: <Widget>[
                       new Padding(padding: EdgeInsets.only(top: 130.0)),
                       new Padding(padding: EdgeInsets.only(left: 30.0)),
                       new Text(_nearestLocation.isNotEmpty?"To $_nearestLocation":"",
-                        style: TextStyle(color: Colors.white,fontSize: 15),
+                        style: TextStyle(color: Colors.white,fontSize: 15),textAlign: TextAlign.left,
                       ),
-                      new Spacer(),
-                      new Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: <Widget>[
-                          new Icon(Icons.location_on,color: Colors.white,),
-                          new SizedBox(width: 5,height: 5,),
-                          new Text(_gpsStatus=="Active"? "Active":"Deactive",
-                            style: TextStyle(color:Colors.white,fontSize: 15),
-                          ),
-                        ],
-                      ),
-                      new Padding(padding: EdgeInsets.only(right: 30.0)),
                     ],
                   ),
 
@@ -180,9 +185,5 @@ class _HomeState extends State<Home> {
     var dbHelper = DBHelper();
    places = dbHelper.getPlaces();
     return places;
-  }
-
-  getGPSStatus(){
-
   }
 }
