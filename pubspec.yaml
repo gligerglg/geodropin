@@ -25,6 +25,7 @@ dependencies:
   path_provider: '>=0.3.0'
   flutter_google_places: ^0.2.0
   google_maps_flutter: ^0.0.3+3
+  flutter_local_notifications: ^0.5.2
 
 dev_dependencies:
   flutter_test:

@@ -27,7 +27,7 @@ class _AddPlaceState extends State<AddPlace> {
   Location _myLocation = new Location(0, 0);
   String latitude = "Latitude";
   String longitude = "Longitude";
-  String place = "Pick a Place";
+  String place = "Location";
   Place myPlace;
   GoogleMapController mapController;
 
@@ -123,7 +123,7 @@ class _AddPlaceState extends State<AddPlace> {
                                     new Expanded(
                                       child: new Text(
                                         "$place",
-                                        style: new TextStyle(fontSize: 20),
+                                        style: new TextStyle(fontSize: 20,color: Colors.grey),
                                         textAlign: TextAlign.center,
                                       ),
                                     ),
