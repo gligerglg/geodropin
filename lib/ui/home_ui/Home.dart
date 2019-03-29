@@ -8,7 +8,7 @@ import 'package:geodropin/ui/AddPlace/addPlace.dart';
 import 'package:geodropin/ui/commom_ui/AppClipper.dart';
 import 'package:geodropin/util/Util.dart';
 import 'package:geolocator/geolocator.dart';
-
+import '../../ui/commom_ui/AlertDialog.dart';
 import '../../service/NotificationService.dart';
 
 class Home extends StatefulWidget {
@@ -19,17 +19,20 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   GeoPoint _myLocation;
   NotificationService notificationService;
-  String _nearestLocation = "", _currentLocation = "";
+  String _nearestLocation = "",
+      _currentLocation = "";
   String _distance = "";
   String _speed = "";
-
+  bool _is200mDone = false,
+      _is1kmDone = false;
   Place minPlace;
-  double distance = 0, minDistance = 0;
+  double distance = 0,
+      minDistance = 0;
   StreamSubscription<Position> positionStream;
 
   var geolocator = Geolocator();
   var locationOptions =
-      LocationOptions(accuracy: LocationAccuracy.high, distanceFilter: 10);
+  LocationOptions(accuracy: LocationAccuracy.high, distanceFilter: 10);
   Future<List<Place>> places;
 
   @override
@@ -67,10 +70,29 @@ class _HomeState extends State<Home> {
 
             if (_currentLocation != _nearestLocation) {
               _currentLocation = _nearestLocation;
+              _is200mDone = false;
+              _is1kmDone = false;
               notificationService.showNotificationWithDefaultSound(
                   "GeoDropIn Alert",
                   "$_currentLocation is your nearest location. It's $_distance away from your location",
-                  "Nearest location has been changed to $_currentLocation");
+                  "Nearest location has been changed to $_currentLocation",
+                  100);
+            }
+
+            if (!_is1kmDone && minDistance <= 1000 && minDistance > 200) {
+              _is1kmDone = true;
+              notificationService.showNotificationWithDefaultSound(
+                  "GeoDropIn Alert",
+                  "There is only about 1km to $_currentLocation. Please be prepare",
+                  "There is only about 1km to $_currentLocation. Please be prepare",
+                  200);
+            } else if (!_is200mDone && minDistance <= 200) {
+              _is200mDone = true;
+              notificationService.showNotificationWithDefaultSound(
+                  "GeoDropIn Alert",
+                  "There is only about 200m to $_currentLocation. It's time!",
+                  "There is only about 200m to $_currentLocation. It's time!",
+                  200);
             }
           });
         });
@@ -87,7 +109,9 @@ class _HomeState extends State<Home> {
             clipper: AppClipper(),
             child: new Container(
               height: 350,
-              color: Theme.of(context).primaryColorDark,
+              color: Theme
+                  .of(context)
+                  .primaryColorDark,
               child: new Column(
                 children: <Widget>[
                   new Row(
@@ -99,30 +123,30 @@ class _HomeState extends State<Home> {
                         _nearestLocation.isNotEmpty
                             ? "To $_nearestLocation"
                             : "",
-                        style: TextStyle(color: Colors.white, fontSize: 15),
+                        style: TextStyle(color: Colors.white, fontSize: 16),
                         textAlign: TextAlign.left,
                       ),
                     ],
                   ),
                   new Expanded(
                       child: new Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: <Widget>[
-                      new Text(
-                        _distance.isNotEmpty ? "$_distance" : "GeoDropIn",
-                        style: TextStyle(
-                            fontSize: 40,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white),
-                      ),
-                      new Text(
-                        _speed.isNotEmpty ? "$_speed" : "",
-                        textAlign: TextAlign.right,
-                        style: TextStyle(color: Colors.white, fontSize: 18),
-                      )
-                    ],
-                  )),
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: <Widget>[
+                          new Text(
+                            _distance.isNotEmpty ? "$_distance" : "GeoDropIn",
+                            style: TextStyle(
+                                fontSize: 40,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white),
+                          ),
+                          new Text(
+                            _speed.isNotEmpty ? "$_speed" : "",
+                            textAlign: TextAlign.right,
+                            style: TextStyle(color: Colors.white, fontSize: 18),
+                          )
+                        ],
+                      )),
                   new Padding(padding: EdgeInsets.only(bottom: 100.0)),
                 ],
               ),
@@ -130,43 +154,70 @@ class _HomeState extends State<Home> {
           ),
           new Expanded(
               child: new FutureBuilder<List<Place>>(
-            future: fetchPlacesFromDatabase(),
-            builder: (context, snapshot) {
-              if (snapshot.hasData) {
-                if (snapshot.data != null) {
-                  return new ListView.builder(
-                    itemCount: snapshot.data.length,
-                    itemBuilder: (context, position) {
-                      return new ListTile(
-                        title: new Text(snapshot.data[position].title),
-                        leading: new CircleAvatar(
-                          backgroundColor: Theme.of(context).primaryColorDark,
-                          child: Icon(
-                            Icons.location_on,
-                            color: Colors.white,
-                          ),
-                        ),
-                      );
-                    },
-                  );
-                }
-              } else {
-                new Container(
-                  alignment: Alignment.center,
-                  child: new Text("NO DATA"),
-                );
-              }
+                future: fetchPlacesFromDatabase(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    if (snapshot.data != null) {
+                      return new ListView.builder(
+                        itemCount: snapshot.data.length,
+                        itemBuilder: (context, position) {
+                          return new ListTile(
+                            title: new Text(snapshot.data[position].title),
+                            leading: new CircleAvatar(
+                              backgroundColor: Theme
+                                  .of(context)
+                                  .primaryColorDark,
+                              child: Icon(
+                                Icons.location_on,
+                                color: Colors.white,
+                              ),
+                            ),
 
-              return new Container(
-                  alignment: AlignmentDirectional.center,
-                  child: new CircularProgressIndicator());
-            },
-          ))
+                            trailing: new InkWell(
+                              child: new Icon(
+                                Icons.delete_outline, color: Colors.deepPurple,
+                                size: 35,),
+                              onTap: () {
+                                showAlertTwoButtons(
+                                    "Remove Place",
+                                    "Are you sure to remove selected place?",
+                                    "Yes",
+                                    "No",
+                                    context, () {
+                                  var dbHelper = DBHelper();
+                                  dbHelper.removePlace(snapshot.data[position]);
+                                  setState(() {
+
+                                  });
+                                  Navigator.pop(context);
+                                }, () {
+                                  Navigator.pop(context);
+                                });
+                              },
+                            ),
+                          );
+                        },
+                      );
+                    }
+                  } else {
+                    new Container(
+                      alignment: Alignment.center,
+                      child: new Text("NO DATA"),
+                    );
+                  }
+
+                  return new Container(
+                      alignment: AlignmentDirectional.center,
+                      child: new CircularProgressIndicator());
+                },
+              ))
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         elevation: 4.0,
-        backgroundColor: Theme.of(context).primaryColorDark,
+        backgroundColor: Theme
+            .of(context)
+            .primaryColorDark,
         icon: const Icon(Icons.location_on),
         label: const Text('Add New Place'),
         onPressed: () {
@@ -184,16 +235,31 @@ class _HomeState extends State<Home> {
             IconButton(
               icon: Icon(
                 Icons.menu,
-                color: Theme.of(context).primaryColorDark,
+                color: Theme
+                    .of(context)
+                    .primaryColorDark,
               ),
-              onPressed: () {},
+              onPressed: () {
+                showAlertOneButton(
+                    "GeoDropIn", "Version R1.00", "Got It!", context, () {
+                  Navigator.pop(context);
+                });
+              },
             ),
             IconButton(
               icon: Icon(
                 Icons.help,
-                color: Theme.of(context).primaryColorDark,
+                color: Theme
+                    .of(context)
+                    .primaryColorDark,
               ),
-              onPressed: () {},
+              onPressed: () {
+                showAlertOneButton(
+                    "GeoDropIn", "Reach Us \n\ngliger.glg@gmail.com", "Got It!",
+                    context, () {
+                  Navigator.pop(context);
+                });
+              },
             )
           ],
         ),
@@ -206,4 +272,5 @@ class _HomeState extends State<Home> {
     places = dbHelper.getPlaces();
     return places;
   }
+
 }

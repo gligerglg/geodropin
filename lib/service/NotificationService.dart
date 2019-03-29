@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import '../ui/commom_ui/AlertDialog.dart';
 
 class NotificationService {
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
@@ -21,24 +22,14 @@ class NotificationService {
   }
 
   Future onSelectNotification(String payload) async {
-    showDialog(
-        context: context,
-        builder: (_) => new AlertDialog(
-              title: const Text("GeoDropIn Alert"),
-              content: new Text("$payload"),
-              actions: <Widget>[
-                new FlatButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: new Text(
-                      "Got It!",
-                      style: TextStyle(color: Colors.deepPurple),
-                    ))
-              ],
-            ));
+    showAlertOneButton(
+        "GeoDropIn Alert", "$payload", "Got It!", context, () {
+      Navigator.pop(context);
+    });
   }
 
   Future showNotificationWithDefaultSound(
-      String title, String message, String payload) async {
+      String title, String message, String payload,int notificationID) async {
     var androidPlatformChannelSpecifics = new AndroidNotificationDetails(
         '0001', 'geodropin', 'GeoDropIn Channel',
         importance: Importance.Max, priority: Priority.High);
@@ -47,6 +38,6 @@ class NotificationService {
         androidPlatformChannelSpecifics, iOSPlatformChannelSpecifics);
 
     await flutterLocalNotificationsPlugin
-        .show(0, title, message, platformChannelSpecifics, payload: payload);
+        .show(notificationID, title, message, platformChannelSpecifics, payload: payload);
   }
 }

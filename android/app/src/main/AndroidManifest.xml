@@ -17,8 +17,8 @@
          FlutterApplication and put your custom class here. -->
     <application
         android:name="io.flutter.app.FlutterApplication"
-        android:label="geodropin"
-        android:icon="@mipmap/ic_launcher">
+        android:label="GeoDropIn"
+        android:icon="@mipmap/trur">
 
         <meta-data android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyDvmLJuWX_FeciVc-4-JBWEb7prKXmOlTU"/>

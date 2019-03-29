@@ -40,8 +40,21 @@ class DBHelper{
     for (int i = 0; i < list.length; i++) {
       places.add(new Place(list[i]["id"], list[i]["title"], list[i]["latitude"], list[i]["longitude"]));
     }
-    print(places.length);
     return places;
+  }
+
+  Future<bool> isPlaceAlreadyExists(Place place) async{
+    var dbClient = await db;
+    List<Map> list = await dbClient.rawQuery("SELECT * FROM Places WHERE id='${place.id}' LIMIT 1");
+    if(list.length>0)
+      return Future.value(true);
+    else
+      return Future.value(false);
+  }
+
+  void removePlace(Place place) async{
+    var dbClient = await db;
+    await dbClient.rawQuery("DELETE FROM Places WHERE id='${place.id}'");
   }
 
   void savePlace(Place place) async {

@@ -4,6 +4,7 @@ class Place{
   double _latitude;
   double _longitude;
 
+
   Place(this._id,this._title, this._latitude, this._longitude);
 
   double get longitude => _longitude;

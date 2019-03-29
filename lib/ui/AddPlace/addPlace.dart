@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_google_places/flutter_google_places.dart';
@@ -10,7 +11,7 @@ import 'package:geodropin/util/Util.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_maps_webservice/places.dart';
-
+import '../../util/InputSet.dart';
 import '../../util/Const.dart';
 
 class AddPlace extends StatefulWidget {
@@ -121,11 +122,17 @@ class _AddPlaceState extends State<AddPlace> {
                                 child: new Row(
                                   children: <Widget>[
                                     new Expanded(
-                                      child: new Text(
-                                        "$place",
-                                        style: new TextStyle(fontSize: 20,color: Colors.grey),
-                                        textAlign: TextAlign.center,
-                                      ),
+                                      child: new InkWell(
+                                        child: new Text(
+                                          "$place",
+                                          style: new TextStyle(
+                                              fontSize: 20, color: Colors.grey),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                        onTap: (){
+                                          getUserInput(context, "Location", place=="Location"?"Please input place title":place, "Set Place",InputSet.INPUT_PLACE);
+                                        },
+                                      )
                                     ),
                                     new Icon(
                                       Icons.location_on,
@@ -160,16 +167,21 @@ class _AddPlaceState extends State<AddPlace> {
                               child: new Row(
                                 children: <Widget>[
                                   new Expanded(
-                                    child: new Text(
-                                      "$latitude",
-                                      style: new TextStyle(
-                                          fontSize: 20, color: Colors.grey),
-                                      textAlign: TextAlign.center,
-                                    ),
+                                    child: new InkWell(
+                                      child: new Text(
+                                        "$latitude",
+                                        style: new TextStyle(
+                                            fontSize: 20, color: Colors.grey),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                      onTap: (){
+                                        //getUserInput(context, "Location", "Please input Latitude of the place", "Set Latitude",InputSet.INPUT_LAT);
+                                      },
+                                    )
                                   ),
                                   new Icon(
                                     Icons.gps_fixed,
-                                    color: Colors.deepPurple,
+                                    color: Colors.grey,
                                   )
                                 ],
                               ),
@@ -201,16 +213,22 @@ class _AddPlaceState extends State<AddPlace> {
                               child: new Row(
                                 children: <Widget>[
                                   new Expanded(
-                                    child: new Text(
-                                      "$longitude",
-                                      style: new TextStyle(
-                                          fontSize: 20, color: Colors.grey),
-                                      textAlign: TextAlign.center,
-                                    ),
+                                    child: new InkWell(
+                                      child: new Text(
+                                        "$longitude",
+                                        style: new TextStyle(
+                                            fontSize: 20, color: Colors.grey),
+                                        textAlign: TextAlign.center,
+                                      ),
+
+                                      onTap: (){
+                                        //getUserInput(context, "Location", "Please input Longitude of the place", "Set Longitude",InputSet.INPUT_LON);
+                                      },
+                                    )
                                   ),
                                   new Icon(
                                     Icons.gps_fixed,
-                                    color: Colors.deepPurple,
+                                    color: Colors.grey,
                                   )
                                 ],
                               ),
@@ -258,6 +276,10 @@ class _AddPlaceState extends State<AddPlace> {
     );
   }
 
+  void onChange(String text){
+
+  }
+
   getPlaces() async {
     Prediction p = await PlacesAutocomplete.show(
         context: context,
@@ -287,9 +309,19 @@ class _AddPlaceState extends State<AddPlace> {
   savePlaceToDatabase(Place place) async {
     if (place != null) {
       var dbHelper = DBHelper();
+      if(place.id!=null){
+        Random rnd = new Random();
+        place.id = rnd.nextInt(9999999).toString();
+      }
       dbHelper.savePlace(place);
-    }else{
-      showAlertOneButton("Warning","Please select a location and save it","OK",context,(){
+
+      showAlertOneButton(
+          "Success", "New Location has successfully inserted", "OK", context, () {
+        Navigator.pop(context);
+      });
+    } else {
+      showAlertOneButton(
+          "Warning", "Please pick a location and save it", "OK", context, () {
         Navigator.pop(context);
       });
     }
@@ -321,5 +353,88 @@ class _AddPlaceState extends State<AddPlace> {
         icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueViolet),
       ),
     );
+  }
+
+  getUserInput(BuildContext context, String title, String content, String buttonText,inputSet) {
+    TextEditingController controller = new TextEditingController();
+    AlertDialog dialog = new AlertDialog(
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+              topRight: Radius.circular(20), topLeft: Radius.circular(20))),
+      contentPadding: EdgeInsets.all(0),
+      content: new Container(
+        height: 200.0,
+        child: new Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: <Widget>[
+            new Padding(
+              padding: EdgeInsets.only(top: 20),
+              child: new Text(
+                "$title",
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                    color: Colors.deepPurple),
+              ),
+            ),
+            new Expanded(
+                child: new Padding(
+                  padding: EdgeInsets.all(20),
+                  child: new TextField(
+                    decoration:  InputDecoration(hintText: content),
+                    keyboardType: inputSet==InputSet.INPUT_PLACE?TextInputType.text:TextInputType.number,
+                    controller: controller,
+                  )
+                )),
+            new Row(
+              children: <Widget>[
+                new Expanded(
+                  child: InkWell(
+                    child: new Container(
+                        color: Colors.deepPurple,
+                        child: new Padding(
+                          padding: EdgeInsets.only(top: 15, bottom: 15),
+                          child: new Text(
+                            "$buttonText",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        )),
+                    onTap: (){
+                      setState(() {
+                        switch(inputSet){
+                          case InputSet.INPUT_PLACE:
+                            if(controller.text.isNotEmpty){
+                              myPlace.title = controller.text;
+                              place = controller.text;
+                            }
+                            break;
+                          case InputSet.INPUT_LAT:
+                            if(controller.text.isNotEmpty){
+                              myPlace.latitude = controller.text as double;
+                              latitude = "Latitude : ${controller.text}";
+                            }
+                            break;
+                          case InputSet.INPUT_LON:
+                            if(controller.text.isNotEmpty){
+                              myPlace.longitude = controller.text as double;
+                              longitude = "Longitude : ${controller.text}";
+                            }
+                            break;
+                        }
+                      });
+
+                      Navigator.pop(context);
+                    },
+                  ),
+                )
+              ],
+            )
+          ],
+        ),
+      ),
+    );
+
+    showDialog(context: context, child: dialog);
   }
 }
