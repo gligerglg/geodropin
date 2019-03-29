@@ -255,7 +255,7 @@ class _HomeState extends State<Home> {
               ),
               onPressed: () {
                 showAlertOneButton(
-                    "GeoDropIn", "Reach Us \n\ngliger.glg@gmail.com", "Got It!",
+                    "Reach Us", "gliger.glg@gmail.com\nhttps://gligerglg.github.io", "Got It!",
                     context, () {
                   Navigator.pop(context);
                 });

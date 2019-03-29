@@ -11,8 +11,9 @@ import 'package:geodropin/util/Util.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_maps_webservice/places.dart';
-import '../../util/InputSet.dart';
+
 import '../../util/Const.dart';
+import '../../util/InputSet.dart';
 
 class AddPlace extends StatefulWidget {
   @override
@@ -23,6 +24,7 @@ class _AddPlaceState extends State<AddPlace> {
   StreamSubscription<Position> positionStream;
 
   var geolocator = Geolocator();
+  final Set<Marker> _markers = {};
   var locationOptions =
       LocationOptions(accuracy: LocationAccuracy.high, distanceFilter: 10);
   Location _myLocation = new Location(0, 0);
@@ -30,10 +32,10 @@ class _AddPlaceState extends State<AddPlace> {
   String longitude = "Longitude";
   String place = "Location";
   Place myPlace;
-  GoogleMapController mapController;
+  Completer<GoogleMapController> mapController = Completer();
 
   void _onMapCreated(GoogleMapController controller) {
-    mapController = controller;
+    mapController.complete(controller);
   }
 
   @override
@@ -65,13 +67,10 @@ class _AddPlaceState extends State<AddPlace> {
                 children: <Widget>[
                   GoogleMap(
                     onMapCreated: _onMapCreated,
-                    options: GoogleMapOptions(
-                      cameraPosition: CameraPosition(
-                        target: new LatLng(_myLocation.lat, _myLocation.lng),
-                        zoom: 9.0,
-                      ),
-                      compassEnabled: false,
-                    ),
+                    myLocationEnabled: true,
+                    markers: _markers,
+                    initialCameraPosition:
+                        CameraPosition(target: LatLng(0, 0), zoom: 12),
                   ),
                   new Padding(
                     padding: EdgeInsets.all(20),
@@ -122,18 +121,24 @@ class _AddPlaceState extends State<AddPlace> {
                                 child: new Row(
                                   children: <Widget>[
                                     new Expanded(
-                                      child: new InkWell(
-                                        child: new Text(
-                                          "$place",
-                                          style: new TextStyle(
-                                              fontSize: 20, color: Colors.grey),
-                                          textAlign: TextAlign.center,
-                                        ),
-                                        onTap: (){
-                                          getUserInput(context, "Location", place=="Location"?"Please input place title":place, "Set Place",InputSet.INPUT_PLACE);
-                                        },
-                                      )
-                                    ),
+                                        child: new InkWell(
+                                      child: new Text(
+                                        "$place",
+                                        style: new TextStyle(
+                                            fontSize: 20, color: Colors.grey),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                      onTap: () {
+                                        getUserInput(
+                                            context,
+                                            "Location",
+                                            place == "Location"
+                                                ? "Please input place title"
+                                                : place,
+                                            "Set Place",
+                                            InputSet.INPUT_PLACE);
+                                      },
+                                    )),
                                     new Icon(
                                       Icons.location_on,
                                       color: Colors.deepPurple,
@@ -167,18 +172,17 @@ class _AddPlaceState extends State<AddPlace> {
                               child: new Row(
                                 children: <Widget>[
                                   new Expanded(
-                                    child: new InkWell(
-                                      child: new Text(
-                                        "$latitude",
-                                        style: new TextStyle(
-                                            fontSize: 20, color: Colors.grey),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                      onTap: (){
-                                        //getUserInput(context, "Location", "Please input Latitude of the place", "Set Latitude",InputSet.INPUT_LAT);
-                                      },
-                                    )
-                                  ),
+                                      child: new InkWell(
+                                    child: new Text(
+                                      "$latitude",
+                                      style: new TextStyle(
+                                          fontSize: 20, color: Colors.grey),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    onTap: () {
+                                      //getUserInput(context, "Location", "Please input Latitude of the place", "Set Latitude",InputSet.INPUT_LAT);
+                                    },
+                                  )),
                                   new Icon(
                                     Icons.gps_fixed,
                                     color: Colors.grey,
@@ -213,19 +217,17 @@ class _AddPlaceState extends State<AddPlace> {
                               child: new Row(
                                 children: <Widget>[
                                   new Expanded(
-                                    child: new InkWell(
-                                      child: new Text(
-                                        "$longitude",
-                                        style: new TextStyle(
-                                            fontSize: 20, color: Colors.grey),
-                                        textAlign: TextAlign.center,
-                                      ),
-
-                                      onTap: (){
-                                        //getUserInput(context, "Location", "Please input Longitude of the place", "Set Longitude",InputSet.INPUT_LON);
-                                      },
-                                    )
-                                  ),
+                                      child: new InkWell(
+                                    child: new Text(
+                                      "$longitude",
+                                      style: new TextStyle(
+                                          fontSize: 20, color: Colors.grey),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    onTap: () {
+                                      //getUserInput(context, "Location", "Please input Longitude of the place", "Set Longitude",InputSet.INPUT_LON);
+                                    },
+                                  )),
                                   new Icon(
                                     Icons.gps_fixed,
                                     color: Colors.grey,
@@ -276,9 +278,7 @@ class _AddPlaceState extends State<AddPlace> {
     );
   }
 
-  void onChange(String text){
-
-  }
+  void onChange(String text) {}
 
   getPlaces() async {
     Prediction p = await PlacesAutocomplete.show(
@@ -309,14 +309,15 @@ class _AddPlaceState extends State<AddPlace> {
   savePlaceToDatabase(Place place) async {
     if (place != null) {
       var dbHelper = DBHelper();
-      if(place.id!=null){
+      if (place.id != null) {
         Random rnd = new Random();
         place.id = rnd.nextInt(9999999).toString();
       }
       dbHelper.savePlace(place);
 
       showAlertOneButton(
-          "Success", "New Location has successfully inserted", "OK", context, () {
+          "Success", "New Location has successfully inserted", "OK", context,
+          () {
         Navigator.pop(context);
       });
     } else {
@@ -327,8 +328,9 @@ class _AddPlaceState extends State<AddPlace> {
     }
   }
 
-  syncCameraPosition(Location location) {
-    mapController.moveCamera(
+  Future<void> syncCameraPosition(Location location) async {
+    final GoogleMapController controller = await mapController.future;
+    controller.animateCamera(
       CameraUpdate.newCameraPosition(
         CameraPosition(
           target: LatLng(location.lat, location.lng),
@@ -342,20 +344,19 @@ class _AddPlaceState extends State<AddPlace> {
   }
 
   addMarker(Location location) {
-    mapController.clearMarkers();
-    mapController.addMarker(
-      MarkerOptions(
-        position: LatLng(
-          location.lat,
-          location.lng,
-        ),
-        infoWindowText: InfoWindowText('$place', ''),
+    setState(() {
+      _markers.clear();
+      _markers.add(Marker(
+        markerId: MarkerId(location.toString()),
+        position: LatLng(location.lat, location.lng),
+        infoWindow: InfoWindow(title: '$place', snippet: ""),
         icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueViolet),
-      ),
-    );
+      ));
+    });
   }
 
-  getUserInput(BuildContext context, String title, String content, String buttonText,inputSet) {
+  getUserInput(BuildContext context, String title, String content,
+      String buttonText, inputSet) {
     TextEditingController controller = new TextEditingController();
     AlertDialog dialog = new AlertDialog(
       shape: RoundedRectangleBorder(
@@ -379,13 +380,14 @@ class _AddPlaceState extends State<AddPlace> {
             ),
             new Expanded(
                 child: new Padding(
-                  padding: EdgeInsets.all(20),
-                  child: new TextField(
-                    decoration:  InputDecoration(hintText: content),
-                    keyboardType: inputSet==InputSet.INPUT_PLACE?TextInputType.text:TextInputType.number,
-                    controller: controller,
-                  )
-                )),
+                    padding: EdgeInsets.all(20),
+                    child: new TextField(
+                      decoration: InputDecoration(hintText: content),
+                      keyboardType: inputSet == InputSet.INPUT_PLACE
+                          ? TextInputType.text
+                          : TextInputType.number,
+                      controller: controller,
+                    ))),
             new Row(
               children: <Widget>[
                 new Expanded(
@@ -400,23 +402,23 @@ class _AddPlaceState extends State<AddPlace> {
                             style: TextStyle(color: Colors.white),
                           ),
                         )),
-                    onTap: (){
+                    onTap: () {
                       setState(() {
-                        switch(inputSet){
+                        switch (inputSet) {
                           case InputSet.INPUT_PLACE:
-                            if(controller.text.isNotEmpty){
+                            if (controller.text.isNotEmpty) {
                               myPlace.title = controller.text;
                               place = controller.text;
                             }
                             break;
                           case InputSet.INPUT_LAT:
-                            if(controller.text.isNotEmpty){
+                            if (controller.text.isNotEmpty) {
                               myPlace.latitude = controller.text as double;
                               latitude = "Latitude : ${controller.text}";
                             }
                             break;
                           case InputSet.INPUT_LON:
-                            if(controller.text.isNotEmpty){
+                            if (controller.text.isNotEmpty) {
                               myPlace.longitude = controller.text as double;
                               longitude = "Longitude : ${controller.text}";
                             }
