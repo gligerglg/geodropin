@@ -6,17 +6,20 @@ import 'package:geodropin/model/GeoPoint.dart';
 import 'package:geodropin/model/Place.dart';
 import 'package:geodropin/ui/AddPlace/addPlace.dart';
 import 'package:geodropin/ui/commom_ui/AppClipper.dart';
+import 'package:geodropin/ui/settings_ui/settings_page.dart';
 import 'package:geodropin/util/Util.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../ui/commom_ui/AlertDialog.dart';
 import '../../service/NotificationService.dart';
+import 'package:flare_flutter/flare_actor.dart';
 
 class Home extends StatefulWidget {
   @override
   _HomeState createState() => _HomeState();
 }
 
-class _HomeState extends State<Home> {
+class _HomeState extends State<Home> with WidgetsBindingObserver{
   GeoPoint _myLocation;
   NotificationService notificationService;
   String _nearestLocation = "",
@@ -29,6 +32,8 @@ class _HomeState extends State<Home> {
   double distance = 0,
       minDistance = 0;
   StreamSubscription<Position> positionStream;
+  double _firstValue=0;
+  double _secondValue=0;
 
   var geolocator = Geolocator();
   var locationOptions =
@@ -38,9 +43,16 @@ class _HomeState extends State<Home> {
   @override
   void initState() {
     // TODO: implement initState
+    getSharedData();
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     notificationService = new NotificationService(context);
 
+    performLocationListener();
+
+  }
+
+  void performLocationListener(){
     positionStream = geolocator
         .getPositionStream(locationOptions)
         .listen((Position position) {
@@ -79,25 +91,47 @@ class _HomeState extends State<Home> {
                   100);
             }
 
-            if (!_is1kmDone && minDistance <= 1000 && minDistance > 200) {
+            if (!_is1kmDone && minDistance <= (_firstValue*1000) && minDistance > _secondValue) {
               _is1kmDone = true;
               notificationService.showNotificationWithDefaultSound(
                   "GeoDropIn Alert",
-                  "There is only about 1km to $_currentLocation. Please be prepare",
-                  "There is only about 1km to $_currentLocation. Please be prepare",
+                  "There is only about $_firstValue km to $_currentLocation. Please be prepare",
+                  "There is only about $_firstValue km to $_currentLocation. Please be prepare",
                   200);
-            } else if (!_is200mDone && minDistance <= 200) {
+            } else if (!_is200mDone && minDistance <= _secondValue) {
               _is200mDone = true;
               notificationService.showNotificationWithDefaultSound(
                   "GeoDropIn Alert",
-                  "There is only about 200m to $_currentLocation. It's time!",
-                  "There is only about 200m to $_currentLocation. It's time!",
+                  "There is only about $_secondValue m to $_currentLocation. It's time!",
+                  "There is only about $_secondValue m to $_currentLocation. It's time!",
                   200);
             }
           });
         });
       }
     });
+  }
+
+  getSharedData() async{
+    SharedPreferences preferences = await SharedPreferences.getInstance();
+    setState(() {
+      _firstValue = preferences.getDouble('first_radius') ?? 5.0;
+      _secondValue =preferences.getDouble('second_radius') ?? 500.0;
+    });
+
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+
+  @override
+  Future<bool> didPushRoute(String route) {
+    print("pushed");
+    return super.didPushRoute(route);
   }
 
   @override
@@ -206,20 +240,17 @@ class _HomeState extends State<Home> {
                     );
                   }
 
-                  return new Container(
-                      alignment: AlignmentDirectional.center,
-                      child: new CircularProgressIndicator());
+                  return new FlareActor("animations/loading.flr",animation: "Loading",);
                 },
               ))
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
         elevation: 4.0,
+        child: new Icon(Icons.add_location),
         backgroundColor: Theme
             .of(context)
             .primaryColorDark,
-        icon: const Icon(Icons.location_on),
-        label: const Text('Add New Place'),
         onPressed: () {
           Navigator.push(context, new MaterialPageRoute(builder: (context) {
             return new AddPlace();
@@ -228,37 +259,38 @@ class _HomeState extends State<Home> {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomAppBar(
+        color: Theme.of(context).primaryColorDark,
+        elevation: 2,
+        notchMargin: 5,
+        shape: CircularNotchedRectangle(),
         child: new Row(
           mainAxisSize: MainAxisSize.max,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
             IconButton(
               icon: Icon(
-                Icons.menu,
-                color: Theme
-                    .of(context)
-                    .primaryColorDark,
+                Icons.info_outline,
+                color: Colors.white,
               ),
               onPressed: () {
                 showAlertOneButton(
-                    "GeoDropIn", "Version R1.00", "Got It!", context, () {
+                    "Reach Us", "GeoDropIn V1.01\ngliger.glg@gmail.com\nhttps://gligerglg.github.io", "Got It!", context, () {
                   Navigator.pop(context);
                 });
               },
             ),
             IconButton(
               icon: Icon(
-                Icons.help,
-                color: Theme
-                    .of(context)
-                    .primaryColorDark,
+                Icons.settings,
+                color: Colors.white,
               ),
               onPressed: () {
-                showAlertOneButton(
+                /*showAlertOneButton(
                     "Reach Us", "gliger.glg@gmail.com\nhttps://gligerglg.github.io", "Got It!",
                     context, () {
                   Navigator.pop(context);
-                });
+                });*/
+                Navigator.push(context, new MaterialPageRoute(builder: (context){return new SettingsUI();}));
               },
             )
           ],

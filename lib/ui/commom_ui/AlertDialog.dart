@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flare_flutter/flare_actor.dart';
 
 void showAlertOneButton(String title, String message, String buttonText,
-    BuildContext context, onTap) {
+    BuildContext context, onTap,) {
   AlertDialog dialog = new AlertDialog(
     shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.only(
@@ -12,6 +13,7 @@ void showAlertOneButton(String title, String message, String buttonText,
       child: new Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: <Widget>[
+
           new Padding(
             padding: EdgeInsets.only(top: 20),
             child: new Text(

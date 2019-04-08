@@ -7,7 +7,7 @@ description: GeoDropIn App
 # Both the version and the builder number may be overridden in flutter
 # build by specifying --build-name and --build-number, respectively.
 # Read more about versioning at semver.org.
-version: 1.0.0+1
+version: 1.0.2+2
 
 environment:
   sdk: ">=2.0.0-dev.68.0 <3.0.0"
@@ -27,6 +27,10 @@ dependencies:
   google_maps_flutter: ^0.4.0
   flutter_local_notifications: ^0.5.2
   flutter_launcher_icons: "^0.7.0"
+  flare_flutter: ^1.3.6
+  shared_preferences: ^0.5.1+2
+
+
 
 flutter_icons:
   image_path: "icons/geodropin_icon.png"
@@ -37,6 +41,7 @@ flutter_icons:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
 
 
 # For information on the generic Dart part of this file, see the
@@ -50,7 +55,8 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-
+  assets:
+  - animations/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.io/assets-and-images/#resolution-aware.

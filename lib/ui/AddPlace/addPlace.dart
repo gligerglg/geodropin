@@ -38,6 +38,7 @@ class _AddPlaceState extends State<AddPlace> {
     mapController.complete(controller);
   }
 
+
   @override
   void initState() {
     // TODO: implement initState
@@ -60,7 +61,7 @@ class _AddPlaceState extends State<AddPlace> {
           new Column(
             children: <Widget>[
               new SizedBox(
-                height: 300,
+                height: 100,
               ),
               new Expanded(
                   child: Stack(
@@ -70,7 +71,7 @@ class _AddPlaceState extends State<AddPlace> {
                     myLocationEnabled: true,
                     markers: _markers,
                     initialCameraPosition:
-                        CameraPosition(target: LatLng(0, 0), zoom: 12),
+                        CameraPosition(target: LatLng(7.7102243,80.9116461), zoom: 7),
                   ),
                   new Padding(
                     padding: EdgeInsets.all(20),
@@ -100,7 +101,7 @@ class _AddPlaceState extends State<AddPlace> {
           new ClipPath(
             clipper: AppClipper(),
             child: new Container(
-              height: 350,
+              height: 200,
               color: Theme.of(context).primaryColorDark,
               child: new Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -129,6 +130,10 @@ class _AddPlaceState extends State<AddPlace> {
                                         textAlign: TextAlign.center,
                                       ),
                                       onTap: () {
+                                        place=='Location'?showAlertOneButton(
+                                            "GeoDropIn", "Please search a location first", "Got It!",
+                                            context, (){Navigator.pop(context);}
+                                        ):
                                         getUserInput(
                                             context,
                                             "Location",
@@ -156,7 +161,7 @@ class _AddPlaceState extends State<AddPlace> {
                     height: 20,
                     width: 20,
                   ),
-                  new Row(
+                /*  new Row(
                     children: <Widget>[
                       new SizedBox(
                         width: 20,
@@ -241,14 +246,19 @@ class _AddPlaceState extends State<AddPlace> {
                         height: 20,
                       )
                     ],
-                  ),
+                  ),*/
                 ],
               ),
             ),
           ),
         ],
       ),
+
       bottomNavigationBar: BottomAppBar(
+        shape: CircularNotchedRectangle(),
+        elevation: 5,
+        notchMargin: 5,
+        color: Theme.of(context).primaryColorDark,
         child: new Row(
           mainAxisSize: MainAxisSize.max,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -256,7 +266,7 @@ class _AddPlaceState extends State<AddPlace> {
             IconButton(
               icon: Icon(
                 Icons.arrow_back_ios,
-                color: Theme.of(context).primaryColorDark,
+                color: Colors.white,
               ),
               onPressed: () {
                 Navigator.pop(context);
@@ -265,11 +275,10 @@ class _AddPlaceState extends State<AddPlace> {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
         elevation: 4.0,
         backgroundColor: Theme.of(context).primaryColorDark,
-        icon: const Icon(Icons.add),
-        label: const Text('Save Location'),
+        child: new Icon(Icons.done,color: Colors.white,),
         onPressed: () {
           savePlaceToDatabase(myPlace);
         },
